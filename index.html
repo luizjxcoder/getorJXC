@@ -1,0 +1,2610 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <title>TrafficPro - Sistema de Gestão de Tráfego Pago</title>
+
+     <script src="https://cdn.tailwindcss.com"></script>
+     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+     <script>
+          tailwind.config = {
+               darkMode: 'class',
+               theme: {
+                    extend: {
+                         colors: {
+                              dark: {
+                                   50: '#f8fafc', 100: '#f1f5f9', 200: '#e2e8f0', 300: '#cbd5e1', 400: '#94a3b8',
+                                   500: '#64748b', 600: '#475569', 700: '#334155', 800: '#1e293b', 900: '#0f172a'
+                              }
+                         }
+                    }
+               }
+          }
+     </script>
+
+     <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+     <div id="sidebar" class="fixed left-0 top-0 h-full w-64 gradient-bg text-white sidebar-transition z-50">
+          <div class="p-6">
+               <div class="flex items-center space-x-3 mb-8">
+                    <i class="fas fa-chart-line text-2xl"></i>
+                    <h1 class="text-xl font-bold">TrafficPro</h1>
+               </div>
+
+               <nav class="space-y-2">
+                    <a href="#" onclick="showSection('dashboard')"
+                         class="nav-item flex items-center space-x-3 p-3 rounded-lg hover:bg-white/20 transition-colors">
+                         <i class="fas fa-tachometer-alt"></i>
+                         <span>Dashboard</span>
+                    </a>
+                    <a href="#" onclick="showSection('clients')"
+                         class="nav-item flex items-center space-x-3 p-3 rounded-lg hover:bg-white/20 transition-colors">
+                         <i class="fas fa-users"></i>
+                         <span>Clientes</span>
+                    </a>
+                    <a href="#" onclick="showSection('campaigns')"
+                         class="nav-item flex items-center space-x-3 p-3 rounded-lg hover:bg-white/20 transition-colors">
+                         <i class="fas fa-bullhorn"></i>
+                         <span>Campanhas</span>
+                    </a>
+                    <a href="#" onclick="showSection('budget')"
+                         class="nav-item flex items-center space-x-3 p-3 rounded-lg hover:bg-white/20 transition-colors">
+                         <i class="fas fa-dollar-sign"></i>
+                         <span>Orçamento</span>
+                    </a>
+                    <a href="#" onclick="showSection('analytics')"
+                         class="nav-item flex items-center space-x-3 p-3 rounded-lg hover:bg-white/20 transition-colors">
+                         <i class="fas fa-chart-bar"></i>
+                         <span>Análises</span>
+                    </a>
+                    <a href="#" onclick="showSection('reports')"
+                         class="nav-item flex items-center space-x-3 p-3 rounded-lg hover:bg-white/20 transition-colors">
+                         <i class="fas fa-file-alt"></i>
+                         <span>Relatórios</span>
+                    </a>
+                    <a href="#" onclick="showSection('integrations')"
+                         class="nav-item flex items-center space-x-3 p-3 rounded-lg hover:bg-white/20 transition-colors">
+                         <i class="fas fa-plug"></i>
+                         <span>Integrações</span>
+                    </a>
+                    <a href="#" onclick="showSection('users')"
+                         class="nav-item flex items-center space-x-3 p-3 rounded-lg hover:bg-white/20 transition-colors">
+                         <i class="fas fa-user-cog"></i>
+                         <span>Usuários</span>
+                    </a>
+               </nav>
+          </div>
+     </div>
+
+     <div class="ml-64 min-h-screen">
+          <header
+               class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 p-4 transition-colors duration-300">
+               <div class="flex justify-between items-center">
+                    <div>
+                         <h2 id="page-title" class="text-2xl font-bold text-gray-800 dark:text-gray-100">Dashboard</h2>
+                         <p class="text-gray-600 dark:text-gray-400">Visão geral do desempenho das campanhas</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                         <button onclick="toggleDarkMode()"
+                              class="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg transition-colors">
+                              <i id="theme-icon" class="fas fa-moon mr-2"></i>
+                              <span id="theme-text">Modo Escuro</span>
+                         </button>
+                         <button onclick="openCampaignModal()"
+                              class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+                              <i class="fas fa-plus mr-2"></i>Nova Campanha
+                         </button>
+                         <div class="flex items-center space-x-2">
+                              <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%234F46E5'/%3E%3Ctext x='16' y='20' text-anchor='middle' fill='white' font-family='Arial' font-size='12' font-weight='bold'%3EU%3C/text%3E%3C/svg%3E"
+                                   alt="User" class="w-8 h-8 rounded-full">
+                              <span class="text-gray-700 dark:text-gray-300">Admin</span>
+                         </div>
+                    </div>
+               </div>
+          </header>
+
+          <div id="dashboard-section" class="p-6">
+               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="metric-card text-white p-6 rounded-xl card-hover transition-all">
+                         <div class="flex items-center justify-between">
+                              <div>
+                                   <p class="text-white/80 text-sm">Investimento Total</p>
+                                   <p class="text-2xl font-bold">R$ 45.280</p>
+                                   <p class="text-white/80 text-sm">+12% vs mês anterior</p>
+                              </div>
+                              <i class="fas fa-dollar-sign text-3xl text-white/60"></i>
+                         </div>
+                    </div>
+
+                    <div class="metric-card-2 text-white p-6 rounded-xl card-hover transition-all">
+                         <div class="flex items-center justify-between">
+                              <div>
+                                   <p class="text-white/80 text-sm">Conversões</p>
+                                   <p class="text-2xl font-bold">1.247</p>
+                                   <p class="text-white/80 text-sm">+8% vs mês anterior</p>
+                              </div>
+                              <i class="fas fa-chart-line text-3xl text-white/60"></i>
+                         </div>
+                    </div>
+
+                    <div class="metric-card-3 text-white p-6 rounded-xl card-hover transition-all">
+                         <div class="flex items-center justify-between">
+                              <div>
+                                   <p class="text-white/80 text-sm">ROAS</p>
+                                   <p class="text-2xl font-bold">4.2x</p>
+                                   <p class="text-white/80 text-sm">+15% vs mês anterior</p>
+                              </div>
+                              <i class="fas fa-trophy text-3xl text-white/60"></i>
+                         </div>
+                    </div>
+
+                    <div class="metric-card-4 text-white p-6 rounded-xl card-hover transition-all">
+                         <div class="flex items-center justify-between">
+                              <div>
+                                   <p class="text-white/80 text-sm">CTR Médio</p>
+                                   <p class="text-2xl font-bold">3.8%</p>
+                                   <p class="text-white/80 text-sm">+5% vs mês anterior</p>
+                              </div>
+                              <i class="fas fa-mouse-pointer text-3xl text-white/60"></i>
+                         </div>
+                    </div>
+               </div>
+
+               <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <div
+                         class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm card-hover transition-colors duration-300">
+                         <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">Performance por Canal
+                         </h3>
+                         <div class="h-64">
+                              <canvas id="channelChart"></canvas>
+                         </div>
+                    </div>
+
+                    <div
+                         class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm card-hover transition-colors duration-300">
+                         <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">Investimento vs Retorno
+                         </h3>
+                         <div class="h-64">
+                              <canvas id="roiChart"></canvas>
+                         </div>
+                    </div>
+               </div>
+
+               <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm card-hover transition-colors duration-300">
+                    <div class="p-6 border-b border-gray-200 dark:border-gray-600">
+                         <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Campanhas Ativas</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                         <table class="w-full">
+                              <thead class="bg-gray-50 dark:bg-gray-700">
+                                   <tr>
+                                        <th
+                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                             Campanha</th>
+                                        <th
+                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                             Cliente</th>
+                                        <th
+                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                             Canal</th>
+                                        <th
+                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                             Orçamento</th>
+                                        <th
+                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                             Gasto</th>
+                                        <th
+                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                             ROAS</th>
+                                        <th
+                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                             Status</th>
+                                   </tr>
+                              </thead>
+                              <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                                   <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                        <td
+                                             class="px-6 py-4 whitespace-nowrap font-medium text-gray-900 dark:text-gray-100">
+                                             Black Friday 2024</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">Loja
+                                             Fashion</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                             <div class="flex items-center space-x-3">
+                                                  <div class="flex items-center space-x-2">
+                                                       <div
+                                                            class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                                            <i class="fab fa-facebook text-blue-600 text-sm"></i>
+                                                       </div>
+                                                       <span
+                                                            class="text-sm font-medium text-gray-900 dark:text-gray-100">Facebook
+                                                            Ads</span>
+                                                  </div>
+                                                  <div class="flex items-center space-x-1">
+                                                       <canvas id="miniChart1" width="40" height="20"
+                                                            class="w-10 h-5"></canvas>
+                                                       <span
+                                                            class="text-xs text-green-600 dark:text-green-400 font-medium">+12%</span>
+                                                  </div>
+                                             </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">R$
+                                             5.000</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">R$
+                                             3.240</td>
+                                        <td
+                                             class="px-6 py-4 whitespace-nowrap text-green-600 dark:text-green-400 font-semibold">
+                                             4.8x</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                             <span
+                                                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                  Ativa
+                                             </span>
+                                        </td>
+                                   </tr>
+                                   <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                        <td
+                                             class="px-6 py-4 whitespace-nowrap font-medium text-gray-900 dark:text-gray-100">
+                                             Leads B2B</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">
+                                             TechCorp</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                             <div class="flex items-center space-x-3">
+                                                  <div class="flex items-center space-x-2">
+                                                       <div
+                                                            class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
+                                                            <i class="fab fa-google text-red-600 text-sm"></i>
+                                                       </div>
+                                                       <span
+                                                            class="text-sm font-medium text-gray-900 dark:text-gray-100">Google
+                                                            Ads</span>
+                                                  </div>
+                                                  <div class="flex items-center space-x-1">
+                                                       <canvas id="miniChart2" width="40" height="20"
+                                                            class="w-10 h-5"></canvas>
+                                                       <span
+                                                            class="text-xs text-green-600 dark:text-green-400 font-medium">+8%</span>
+                                                  </div>
+                                             </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">R$
+                                             8.000</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">R$
+                                             6.120</td>
+                                        <td
+                                             class="px-6 py-4 whitespace-nowrap text-green-600 dark:text-green-400 font-semibold">
+                                             3.2x</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                             <span
+                                                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                  Ativa
+                                             </span>
+                                        </td>
+                                   </tr>
+                                   <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                        <td
+                                             class="px-6 py-4 whitespace-nowrap font-medium text-gray-900 dark:text-gray-100">
+                                             Remarketing</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">
+                                             E-commerce Plus</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                             <div class="flex items-center space-x-3">
+                                                  <div class="flex items-center space-x-2">
+                                                       <div
+                                                            class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                                            <i class="fab fa-linkedin text-blue-700 text-sm"></i>
+                                                       </div>
+                                                       <span
+                                                            class="text-sm font-medium text-gray-900 dark:text-gray-100">LinkedIn
+                                                            Ads</span>
+                                                  </div>
+                                                  <div class="flex items-center space-x-1">
+                                                       <canvas id="miniChart3" width="40" height="20"
+                                                            class="w-10 h-5"></canvas>
+                                                       <span
+                                                            class="text-xs text-yellow-600 dark:text-yellow-400 font-medium">-2%</span>
+                                                  </div>
+                                             </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">R$
+                                             2.500</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">R$
+                                             1.890</td>
+                                        <td
+                                             class="px-6 py-4 whitespace-nowrap text-yellow-600 dark:text-yellow-400 font-semibold">
+                                             2.1x</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                             <span
+                                                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                  Otimizando
+                                             </span>
+                                        </td>
+                                   </tr>
+                              </tbody>
+                         </table>
+                    </div>
+               </div>
+          </div>
+
+          <div id="clients-section" class="p-6 hidden">
+               <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-100">Gestão de Clientes</h3>
+                    <div class="flex space-x-3">
+                         <div class="relative">
+                              <button onclick="toggleExportMenu()"
+                                   class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center">
+                                   <i class="fas fa-download mr-2"></i>Exportar
+                                   <i class="fas fa-chevron-down ml-2 text-sm"></i>
+                              </button>
+                              <div id="exportMenu"
+                                   class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10 hidden">
+                                   <div class="py-2">
+                                        <button onclick="exportToPDF()"
+                                             class="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center">
+                                             <i class="fas fa-file-pdf text-red-500 mr-3"></i>
+                                             <span>Exportar PDF</span>
+                                        </button>
+                                        <button onclick="exportToExcel()"
+                                             class="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center">
+                                             <i class="fas fa-file-excel text-green-500 mr-3"></i>
+                                             <span>Exportar Excel</span>
+                                        </button>
+                                   </div>
+                              </div>
+                         </div>
+                         <button onclick="openClientModal()"
+                              class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                              <i class="fas fa-plus mr-2"></i>Novo Cliente
+                         </button>
+                    </div>
+               </div>
+
+               <div id="clients-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+               </div>
+          </div>
+
+          <div id="campaigns-section" class="p-6 hidden">
+               <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-100">Gerenciamento de Campanhas</h3>
+                    <div class="flex space-x-3">
+                         <div class="relative">
+                              <button onclick="toggleCampaignExportMenu()"
+                                   class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center">
+                                   <i class="fas fa-download mr-2"></i>Exportar
+                                   <i class="fas fa-chevron-down ml-2 text-sm"></i>
+                              </button>
+                              <div id="campaignExportMenu"
+                                   class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10 hidden">
+                                   <div class="py-2">
+                                        <button onclick="exportCampaignsToPDF()"
+                                             class="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center">
+                                             <i class="fas fa-file-pdf text-red-500 mr-3"></i>
+                                             <span>Exportar PDF</span>
+                                        </button>
+                                        <button onclick="exportCampaignsToExcel()"
+                                             class="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center">
+                                             <i class="fas fa-file-excel text-green-500 mr-3"></i>
+                                             <span>Exportar Excel</span>
+                                        </button>
+                                   </div>
+                              </div>
+                         </div>
+                         <button onclick="openCampaignModal()"
+                              class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                              <i class="fas fa-plus mr-2"></i>Nova Campanha
+                         </button>
+                    </div>
+               </div>
+
+               <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm transition-colors duration-300">
+                    <div class="p-6 border-b border-gray-200 dark:border-gray-600">
+                         <div class="flex space-x-4">
+                              <select
+                                   class="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 transition-colors duration-300">
+                                   <option>Todos os clientes</option>
+                                   <option>Loja Fashion</option>
+                                   <option>TechCorp</option>
+                              </select>
+                              <select
+                                   class="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 transition-colors duration-300">
+                                   <option>Todos os canais</option>
+                                   <option>Google Ads</option>
+                                   <option>Facebook Ads</option>
+                                   <option>LinkedIn Ads</option>
+                              </select>
+                              <select
+                                   class="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 transition-colors duration-300">
+                                   <option>Todos os status</option>
+                                   <option>Ativa</option>
+                                   <option>Pausada</option>
+                                   <option>Finalizada</option>
+                              </select>
+                         </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                         <table class="w-full">
+                              <thead class="bg-gray-50 dark:bg-gray-700">
+                                   <tr>
+                                        <th
+                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                             Campanha</th>
+                                        <th
+                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                             Cliente</th>
+                                        <th
+                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                             Canal</th>
+                                        <th
+                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                             Período</th>
+                                        <th
+                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                             Orçamento</th>
+                                        <th
+                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                             Gasto</th>
+                                        <th
+                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                             Retorno Total</th>
+                                        <th
+                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                             ROAS</th>
+                                        <th
+                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                             ROI</th>
+                                        <th
+                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                             Status</th>
+                                        <th
+                                             class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                             Ações</th>
+                                   </tr>
+                              </thead>
+                              <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                              </tbody>
+                         </table>
+                    </div>
+               </div>
+          </div>
+
+          <div id="budget-section" class="p-6 hidden">
+               <h3 class="text-xl font-semibold mb-6 text-gray-800 dark:text-gray-100">Controle Financeiro</h3>
+
+               <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                    <div
+                         class="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm transition-colors duration-300">
+                         <h4 class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">Distribuição de
+                              Orçamento</h4>
+                         <div class="h-64">
+                              <canvas id="budgetChart"></canvas>
+                         </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm transition-colors duration-300">
+                         <h4 class="text-lg font-semibold mb-6 text-gray-800 dark:text-gray-100">Resumo Financeiro</h4>
+                         <div class="space-y-4">
+                              <div class="p-4 rounded-xl border"
+                                   style="background: linear-gradient(135deg, #D1D9DA 0%, #C5D1D2 100%); border-color: #B8C6C7;">
+                                   <div class="flex items-center justify-between">
+                                        <div class="flex items-center">
+                                             <div class="w-10 h-10 rounded-lg flex items-center justify-center mr-3"
+                                                  style="background-color: #B8C6C7;">
+                                                  <i class="fas fa-wallet text-gray-600 text-sm"></i>
+                                             </div>
+                                             <span class="text-gray-700 font-medium">Orçamento Total</span>
+                                        </div>
+                                        <span class="font-bold text-gray-800 text-lg">R$ 48.000</span>
+                                   </div>
+                              </div>
+
+                              <div class="p-4 rounded-xl border"
+                                   style="background: linear-gradient(135deg, #C5D1D2 0%, #B8C6C7 100%); border-color: #ABBCBD;">
+                                   <div class="flex items-center justify-between">
+                                        <div class="flex items-center">
+                                             <div class="w-10 h-10 rounded-lg flex items-center justify-center mr-3"
+                                                  style="background-color: #ABBCBD;">
+                                                  <i class="fas fa-credit-card text-gray-600 text-sm"></i>
+                                             </div>
+                                             <span class="text-gray-700 font-medium">Gasto Atual</span>
+                                        </div>
+                                        <span class="font-bold text-gray-800 text-lg">R$ 31.250</span>
+                                   </div>
+                              </div>
+
+                              <div class="p-4 rounded-xl border"
+                                   style="background: linear-gradient(135deg, #B8C6C7 0%, #ABBCBD 100%); border-color: #9EB2B3;">
+                                   <div class="flex items-center justify-between">
+                                        <div class="flex items-center">
+                                             <div class="w-10 h-10 rounded-lg flex items-center justify-center mr-3"
+                                                  style="background-color: #9EB2B3;">
+                                                  <i class="fas fa-piggy-bank text-gray-600 text-sm"></i>
+                                             </div>
+                                             <span class="text-gray-700 font-medium">Disponível</span>
+                                        </div>
+                                        <span class="font-bold text-gray-800 text-lg">R$ 16.750</span>
+                                   </div>
+                              </div>
+
+                              <div class="p-4 rounded-xl border"
+                                   style="background: linear-gradient(135deg, #ABBCBD 0%, #9EB2B3 100%); border-color: #91A8A9;">
+                                   <div class="flex items-center justify-between">
+                                        <div class="flex items-center">
+                                             <div class="w-10 h-10 rounded-lg flex items-center justify-center mr-3"
+                                                  style="background-color: #91A8A9;">
+                                                  <i class="fas fa-chart-line text-gray-600 text-sm"></i>
+                                             </div>
+                                             <span class="text-gray-700 font-medium">Receita Gerada</span>
+                                        </div>
+                                        <span class="font-bold text-gray-800 text-lg">R$ 131.250</span>
+                                   </div>
+                              </div>
+
+                              <div class="p-4 rounded-xl border mt-6"
+                                   style="background: linear-gradient(135deg, #9EB2B3 0%, #91A8A9 100%); border-color: #849E9F;">
+                                   <div class="flex items-center justify-between">
+                                        <div class="flex items-center">
+                                             <div class="w-10 h-10 rounded-lg flex items-center justify-center mr-3"
+                                                  style="background-color: #849E9F;">
+                                                  <i class="fas fa-trophy text-gray-600 text-sm"></i>
+                                             </div>
+                                             <span class="text-gray-700 font-medium">ROAS Médio</span>
+                                        </div>
+                                        <span class="font-bold text-gray-800 text-lg">4.2x</span>
+                                   </div>
+                              </div>
+                         </div>
+                    </div>
+               </div>
+          </div>
+
+          <div id="analytics-section" class="p-6 hidden">
+               <h3 class="text-xl font-semibold mb-6">Análises e Métricas</h3>
+
+               <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                    <div
+                         class="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm transition-colors duration-300">
+                         <h4 class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">Conversões por Canal
+                         </h4>
+                         <div class="h-64">
+                              <canvas id="conversionsChart"></canvas>
+                         </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm transition-colors duration-300">
+                         <h4 class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">CTR por Período</h4>
+                         <div class="h-64">
+                              <canvas id="ctrChart"></canvas>
+                         </div>
+                    </div>
+               </div>
+
+               <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm transition-colors duration-300">
+                    <h4 class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">Métricas Detalhadas</h4>
+                    <div class="overflow-x-auto">
+                         <table class="w-full">
+                              <thead class="bg-gray-50 dark:bg-gray-700">
+                                   <tr>
+                                        <th
+                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                             Canal</th>
+                                        <th
+                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                             Impressões</th>
+                                        <th
+                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                             Cliques</th>
+                                        <th
+                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                             CTR</th>
+                                        <th
+                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                             CPC</th>
+                                        <th
+                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                             Conversões</th>
+                                        <th
+                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                             Taxa Conv.</th>
+                                   </tr>
+                              </thead>
+                              <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                                   <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                        <td
+                                             class="px-6 py-4 whitespace-nowrap font-medium text-gray-900 dark:text-gray-100">
+                                             Google Ads</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">125.430
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">4.821
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">3.84%
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">R$ 2.45
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">487
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">10.1%
+                                        </td>
+                                   </tr>
+                                   <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                        <td
+                                             class="px-6 py-4 whitespace-nowrap font-medium text-gray-900 dark:text-gray-100">
+                                             Facebook Ads</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">89.210
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">3.568
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">4.00%
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">R$ 1.89
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">428
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">12.0%
+                                        </td>
+                                   </tr>
+                              </tbody>
+                         </table>
+                    </div>
+               </div>
+          </div>
+
+          <div id="reports-section" class="p-6 hidden">
+               <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-semibold">Sistema de Relatórios</h3>
+                    <div class="flex space-x-3">
+                         <button onclick="openReportModal()"
+                              class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                              <i class="fas fa-plus mr-2"></i>Novo Relatório
+                         </button>
+                         <button onclick="generateQuickReport()"
+                              class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">
+                              <i class="fas fa-bolt mr-2"></i>Relatório Rápido
+                         </button>
+                    </div>
+               </div>
+
+               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="metric-card text-white p-6 rounded-xl card-hover cursor-pointer transform hover:scale-105 transition-all duration-200"
+                         onclick="generateReportByType('geral')">
+                         <div class="flex items-center justify-between mb-4">
+                              <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                                   <i class="fas fa-chart-pie text-2xl"></i>
+                              </div>
+                              <i class="fas fa-arrow-right text-xl opacity-70"></i>
+                         </div>
+                         <h4 class="text-lg font-semibold mb-2">Relatório Geral</h4>
+                         <p class="text-white/80 text-sm">Visão completa de todas as campanhas e métricas</p>
+                    </div>
+
+                    <div class="metric-card-2 text-white p-6 rounded-xl card-hover cursor-pointer transform hover:scale-105 transition-all duration-200"
+                         onclick="generateReportByType('performance')">
+                         <div class="flex items-center justify-between mb-4">
+                              <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                                   <i class="fas fa-chart-line text-2xl"></i>
+                              </div>
+                              <i class="fas fa-arrow-right text-xl opacity-70"></i>
+                         </div>
+                         <h4 class="text-lg font-semibold mb-2">Performance</h4>
+                         <p class="text-white/80 text-sm">Análise detalhada de ROAS, ROI e conversões</p>
+                    </div>
+
+                    <div class="metric-card-3 text-white p-6 rounded-xl card-hover cursor-pointer transform hover:scale-105 transition-all duration-200"
+                         onclick="generateReportByType('financeiro')">
+                         <div class="flex items-center justify-between mb-4">
+                              <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                                   <i class="fas fa-dollar-sign text-2xl"></i>
+                              </div>
+                              <i class="fas fa-arrow-right text-xl opacity-70"></i>
+                         </div>
+                         <h4 class="text-lg font-semibold mb-2">Financeiro</h4>
+                         <p class="text-white/80 text-sm">Controle de orçamentos, gastos e receitas</p>
+                    </div>
+
+                    <div class="metric-card-4 text-white p-6 rounded-xl card-hover cursor-pointer transform hover:scale-105 transition-all duration-200"
+                         onclick="generateReportByType('comparativo')">
+                         <div class="flex items-center justify-between mb-4">
+                              <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                                   <i class="fas fa-balance-scale text-2xl"></i>
+                              </div>
+                              <i class="fas fa-arrow-right text-xl opacity-70"></i>
+                         </div>
+                         <h4 class="text-lg font-semibold mb-2">Comparativo</h4>
+                         <p class="text-white/80 text-sm">Compare campanhas, canais e períodos</p>
+                    </div>
+               </div>
+
+               <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm mb-8 transition-colors duration-300">
+                    <div class="p-6 border-b border-gray-200 dark:border-gray-600">
+                         <div class="flex items-center justify-between">
+                              <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Relatórios Individuais
+                                   de Campanhas</h4>
+                              <div class="flex space-x-2">
+                                   <select id="campaignFilterClient"
+                                        class="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 text-sm transition-colors duration-300">
+                                        <option value="">Todos os clientes</option>
+                                   </select>
+                                   <select id="campaignFilterStatus"
+                                        class="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 text-sm transition-colors duration-300">
+                                        <option value="">Todos os status</option>
+                                        <option value="Ativa">Ativa</option>
+                                        <option value="Pausada">Pausada</option>
+                                        <option value="Cancelada">Cancelada</option>
+                                        <option value="Otimizando">Otimizando</option>
+                                   </select>
+                              </div>
+                         </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                         <table class="w-full">
+                              <thead class="bg-gray-50 dark:bg-gray-700">
+                                   <tr>
+                                        <th
+                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                             Campanha</th>
+                                        <th
+                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                             Cliente</th>
+                                        <th
+                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                             Canal</th>
+                                        <th
+                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                             Status</th>
+                                        <th
+                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                             ROAS</th>
+                                        <th
+                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                             Investimento</th>
+                                        <th
+                                             class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                             Relatório</th>
+                                   </tr>
+                              </thead>
+                              <tbody id="individualCampaignsTable"
+                                   class="divide-y divide-gray-200 dark:divide-gray-600">
+                              </tbody>
+                         </table>
+                    </div>
+               </div>
+
+               <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div
+                         class="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm transition-colors duration-300">
+                         <h4 class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">Histórico de Relatórios
+                         </h4>
+                         <div id="reportsHistory" class="space-y-3">
+                         </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm transition-colors duration-300">
+                         <h4 class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">Estatísticas de
+                              Relatórios</h4>
+                         <div class="space-y-4">
+                              <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                                   <div class="flex items-center">
+                                        <div
+                                             class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                                             <i class="fas fa-file-alt text-blue-600"></i>
+                                        </div>
+                                        <span class="font-medium">Total Gerados</span>
+                                   </div>
+                                   <span class="text-xl font-bold text-blue-600" id="totalReports">0</span>
+                              </div>
+
+                              <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                                   <div class="flex items-center">
+                                        <div
+                                             class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                                             <i class="fas fa-download text-green-600"></i>
+                                        </div>
+                                        <span class="font-medium">Este Mês</span>
+                                   </div>
+                                   <span class="text-xl font-bold text-green-600" id="monthlyReports">0</span>
+                              </div>
+
+                              <div class="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                                   <div class="flex items-center">
+                                        <div
+                                             class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                                             <i class="fas fa-clock text-purple-600"></i>
+                                        </div>
+                                        <span class="font-medium">Último Relatório</span>
+                                   </div>
+                                   <span class="text-sm font-medium text-purple-600" id="lastReportDate">-</span>
+                              </div>
+
+                              <div class="mt-6 pt-4 border-t border-gray-200">
+                                   <h5 class="font-medium text-gray-700 mb-3">Tipos Mais Gerados</h5>
+                                   <div class="space-y-2">
+                                        <div class="flex justify-between text-sm">
+                                             <span class="text-gray-600">Geral</span>
+                                             <span class="font-medium">45%</span>
+                                        </div>
+                                        <div class="flex justify-between text-sm">
+                                             <span class="text-gray-600">Performance</span>
+                                             <span class="font-medium">30%</span>
+                                        </div>
+                                        <div class="flex justify-between text-sm">
+                                             <span class="text-gray-600">Financeiro</span>
+                                             <span class="font-medium">25%</span>
+                                        </div>
+                                   </div>
+                              </div>
+                         </div>
+                    </div>
+               </div>
+          </div>
+
+          <div id="integrations-section" class="p-6 hidden">
+               <div class="flex justify-between items-center mb-6">
+                    <div>
+                         <h3 class="text-xl font-semibold">Integrações com Plataformas</h3>
+                         <p class="text-gray-600">Conecte e gerencie todas as suas plataformas de anúncios em um só
+                              lugar</p>
+                    </div>
+                    <div class="flex space-x-3">
+                         <button onclick="syncAllPlatforms()"
+                              class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                              <i class="fas fa-sync-alt mr-2"></i>Sincronizar Tudo
+                         </button>
+                         <button onclick="openIntegrationModal()"
+                              class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">
+                              <i class="fas fa-plus mr-2"></i>Nova Integração
+                         </button>
+                    </div>
+               </div>
+
+               <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div class="metric-card text-white p-6 rounded-xl card-hover transition-all">
+                         <div class="flex items-center justify-between">
+                              <div>
+                                   <p class="text-white/80 text-sm">Conectadas</p>
+                                   <p class="text-2xl font-bold" id="connectedPlatforms">6</p>
+                              </div>
+                              <i class="fas fa-check-circle text-3xl text-white/60"></i>
+                         </div>
+                    </div>
+
+                    <div class="metric-card-2 text-white p-6 rounded-xl card-hover transition-all">
+                         <div class="flex items-center justify-between">
+                              <div>
+                                   <p class="text-white/80 text-sm">Pendentes</p>
+                                   <p class="text-2xl font-bold" id="pendingPlatforms">2</p>
+                              </div>
+                              <i class="fas fa-clock text-3xl text-white/60"></i>
+                         </div>
+                    </div>
+
+                    <div class="metric-card-3 text-white p-6 rounded-xl card-hover transition-all">
+                         <div class="flex items-center justify-between">
+                              <div>
+                                   <p class="text-white/80 text-sm">Última Sync</p>
+                                   <p class="text-lg font-bold" id="lastSync">Agora</p>
+                              </div>
+                              <i class="fas fa-sync-alt text-3xl text-white/60"></i>
+                         </div>
+                    </div>
+
+                    <div class="metric-card-4 text-white p-6 rounded-xl card-hover transition-all">
+                         <div class="flex items-center justify-between">
+                              <div>
+                                   <p class="text-white/80 text-sm">Campanhas Sync</p>
+                                   <p class="text-2xl font-bold" id="syncedCampaigns">247</p>
+                              </div>
+                              <i class="fas fa-bullhorn text-3xl text-white/60"></i>
+                         </div>
+                    </div>
+               </div>
+
+               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white dark:bg-[#444B57] p-6 rounded-xl shadow-sm card-hover border-2 transition-colors duration-300"
+                         style="border-color: #9AAFB0; border-radius: 12px;">
+                         <div class="flex items-center justify-between mb-4">
+                              <div class="flex items-center space-x-3">
+                                   <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                                        <i class="fab fa-google text-red-600 text-xl"></i>
+                                   </div>
+                                   <div>
+                                        <h4 class="font-semibold text-gray-900 dark:text-white">Google Ads</h4>
+                                        <p class="text-xs text-gray-500 dark:text-gray-300">Search & Display</p>
+                                   </div>
+                              </div>
+                              <span
+                                   class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">Conectado</span>
+                         </div>
+                         <div class="space-y-2 mb-4">
+                              <div class="flex justify-between text-sm">
+                                   <span class="text-gray-600 dark:text-gray-300">Campanhas:</span>
+                                   <span class="font-medium text-gray-900 dark:text-white">47</span>
+                              </div>
+                              <div class="flex justify-between text-sm">
+                                   <span class="text-gray-600 dark:text-gray-300">Gasto Hoje:</span>
+                                   <span class="font-medium text-green-600 dark:text-green-400">R$ 2.847</span>
+                              </div>
+                              <div class="flex justify-between text-sm">
+                                   <span class="text-gray-600 dark:text-gray-300">Última Sync:</span>
+                                   <span class="font-medium text-gray-900 dark:text-white">2 min atrás</span>
+                              </div>
+                         </div>
+                         <div class="flex space-x-2">
+                              <button onclick="configurePlatform('google')"
+                                   class="flex-1 bg-gray-100 text-gray-700 py-2 px-3 rounded-lg text-sm hover:bg-gray-200">
+                                   <i class="fas fa-cog mr-1"></i>Config
+                              </button>
+                              <button onclick="syncPlatform('google')"
+                                   class="flex-1 bg-red-600 text-white py-2 px-3 rounded-lg text-sm hover:bg-red-700">
+                                   <i class="fas fa-sync-alt mr-1"></i>Sync
+                              </button>
+                         </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-[#444B57] p-6 rounded-xl shadow-sm card-hover border-2 transition-colors duration-300"
+                         style="border-color: #9AAFB0; border-radius: 12px;">
+                         <div class="flex items-center justify-between mb-4">
+                              <div class="flex items-center space-x-3">
+                                   <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                        <i class="fab fa-meta text-blue-600 text-xl"></i>
+                                   </div>
+                                   <div>
+                                        <h4 class="font-semibold text-gray-900 dark:text-white">Meta Ads</h4>
+                                        <p class="text-xs text-gray-500 dark:text-gray-300">Facebook & Instagram</p>
+                                   </div>
+                              </div>
+                              <span
+                                   class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">Conectado</span>
+                         </div>
+                         <div class="space-y-2 mb-4">
+                              <div class="flex justify-between text-sm">
+                                   <span class="text-gray-600 dark:text-gray-300">Campanhas:</span>
+                                   <span class="font-medium text-gray-900 dark:text-white">32</span>
+                              </div>
+                              <div class="flex justify-between text-sm">
+                                   <span class="text-gray-600 dark:text-gray-300">Gasto Hoje:</span>
+                                   <span class="font-medium text-green-600 dark:text-green-400">R$ 1.923</span>
+                              </div>
+                              <div class="flex justify-between text-sm">
+                                   <span class="text-gray-600 dark:text-gray-300">Última Sync:</span>
+                                   <span class="font-medium text-gray-900 dark:text-white">5 min atrás</span>
+                              </div>
+                         </div>
+                         <div class="flex space-x-2">
+                              <button onclick="configurePlatform('meta')"
+                                   class="flex-1 bg-gray-100 text-gray-700 py-2 px-3 rounded-lg text-sm hover:bg-gray-200">
+                                   <i class="fas fa-cog mr-1"></i>Config
+                              </button>
+                              <button onclick="syncPlatform('meta')"
+                                   class="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg text-sm hover:bg-blue-700">
+                                   <i class="fas fa-sync-alt mr-1"></i>Sync
+                              </button>
+                         </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-[#444B57] p-6 rounded-xl shadow-sm card-hover border-2 transition-colors duration-300"
+                         style="border-color: #9AAFB0; border-radius: 12px;">
+                         <div class="flex items-center justify-between mb-4">
+                              <div class="flex items-center space-x-3">
+                                   <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                        <i class="fab fa-linkedin text-blue-700 text-xl"></i>
+                                   </div>
+                                   <div>
+                                        <h4 class="font-semibold text-gray-900 dark:text-white">LinkedIn Ads</h4>
+                                        <p class="text-xs text-gray-500 dark:text-gray-300">B2B Marketing</p>
+                                   </div>
+                              </div>
+                              <span
+                                   class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">Conectado</span>
+                         </div>
+                         <div class="space-y-2 mb-4">
+                              <div class="flex justify-between text-sm">
+                                   <span class="text-gray-600 dark:text-gray-300">Campanhas:</span>
+                                   <span class="font-medium text-gray-900 dark:text-white">18</span>
+                              </div>
+                              <div class="flex justify-between text-sm">
+                                   <span class="text-gray-600 dark:text-gray-300">Gasto Hoje:</span>
+                                   <span class="font-medium text-green-600 dark:text-green-400">R$ 1.245</span>
+                              </div>
+                              <div class="flex justify-between text-sm">
+                                   <span class="text-gray-600 dark:text-gray-300">Última Sync:</span>
+                                   <span class="font-medium text-gray-900 dark:text-white">1 min atrás</span>
+                              </div>
+                         </div>
+                         <div class="flex space-x-2">
+                              <button onclick="configurePlatform('linkedin')"
+                                   class="flex-1 bg-gray-100 text-gray-700 py-2 px-3 rounded-lg text-sm hover:bg-gray-200">
+                                   <i class="fas fa-cog mr-1"></i>Config
+                              </button>
+                              <button onclick="syncPlatform('linkedin')"
+                                   class="flex-1 bg-blue-700 text-white py-2 px-3 rounded-lg text-sm hover:bg-blue-800">
+                                   <i class="fas fa-sync-alt mr-1"></i>Sync
+                              </button>
+                         </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-[#444B57] p-6 rounded-xl shadow-sm card-hover border-2 transition-colors duration-300"
+                         style="border-color: #9AAFB0; border-radius: 12px;">
+                         <div class="flex items-center justify-between mb-4">
+                              <div class="flex items-center space-x-3">
+                                   <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                                        <i class="fab fa-tiktok text-black text-xl"></i>
+                                   </div>
+                                   <div>
+                                        <h4 class="font-semibold text-gray-900 dark:text-white">TikTok Ads</h4>
+                                        <p class="text-xs text-gray-500 dark:text-gray-300">Video Marketing</p>
+                                   </div>
+                              </div>
+                              <span
+                                   class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">Conectado</span>
+                         </div>
+                         <div class="space-y-2 mb-4">
+                              <div class="flex justify-between text-sm">
+                                   <span class="text-gray-600 dark:text-gray-300">Campanhas:</span>
+                                   <span class="font-medium text-gray-900 dark:text-white">12</span>
+                              </div>
+                              <div class="flex justify-between text-sm">
+                                   <span class="text-gray-600 dark:text-gray-300">Gasto Hoje:</span>
+                                   <span class="font-medium text-green-600 dark:text-green-400">R$ 892</span>
+                              </div>
+                              <div class="flex justify-between text-sm">
+                                   <span class="text-gray-600 dark:text-gray-300">Última Sync:</span>
+                                   <span class="font-medium text-gray-900 dark:text-white">3 min atrás</span>
+                              </div>
+                         </div>
+                         <div class="flex space-x-2">
+                              <button onclick="configurePlatform('tiktok')"
+                                   class="flex-1 bg-gray-100 text-gray-700 py-2 px-3 rounded-lg text-sm hover:bg-gray-200">
+                                   <i class="fas fa-cog mr-1"></i>Config
+                              </button>
+                              <button onclick="syncPlatform('tiktok')"
+                                   class="flex-1 bg-black text-white py-2 px-3 rounded-lg text-sm hover:bg-gray-800">
+                                   <i class="fas fa-sync-alt mr-1"></i>Sync
+                              </button>
+                         </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-[#444B57] p-6 rounded-xl shadow-sm card-hover border-2 transition-colors duration-300"
+                         style="border-color: #9AAFB0; border-radius: 12px;">
+                         <div class="flex items-center justify-between mb-4">
+                              <div class="flex items-center space-x-3">
+                                   <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                                        <i class="fab fa-x-twitter text-gray-800 text-xl"></i>
+                                   </div>
+                                   <div>
+                                        <h4 class="font-semibold text-gray-900 dark:text-white">X Ads</h4>
+                                        <p class="text-xs text-gray-500 dark:text-gray-300">Twitter Advertising</p>
+                                   </div>
+                              </div>
+                              <span
+                                   class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium">Pendente</span>
+                         </div>
+                         <div class="space-y-2 mb-4">
+                              <div class="flex justify-between text-sm">
+                                   <span class="text-gray-600 dark:text-gray-300">Campanhas:</span>
+                                   <span class="font-medium text-gray-900 dark:text-white">-</span>
+                              </div>
+                              <div class="flex justify-between text-sm">
+                                   <span class="text-gray-600 dark:text-gray-300">Status:</span>
+                                   <span class="font-medium text-yellow-600 dark:text-yellow-400">Aguardando</span>
+                              </div>
+                              <div class="flex justify-between text-sm">
+                                   <span class="text-gray-600 dark:text-gray-300">Configuração:</span>
+                                   <span class="font-medium text-gray-900 dark:text-white">60%</span>
+                              </div>
+                         </div>
+                         <div class="flex space-x-2">
+                              <button onclick="configurePlatform('x')"
+                                   class="flex-1 bg-gray-100 text-gray-700 py-2 px-3 rounded-lg text-sm hover:bg-gray-200">
+                                   <i class="fas fa-cog mr-1"></i>Config
+                              </button>
+                              <button onclick="connectPlatform('x')"
+                                   class="flex-1 bg-gray-800 text-white py-2 px-3 rounded-lg text-sm hover:bg-gray-900">
+                                   <i class="fas fa-plug mr-1"></i>Conectar
+                              </button>
+                         </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-[#444B57] p-6 rounded-xl shadow-sm card-hover border-2 transition-colors duration-300"
+                         style="border-color: #9AAFB0; border-radius: 12px;">
+                         <div class="flex items-center justify-between mb-4">
+                              <div class="flex items-center space-x-3">
+                                   <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                                        <i class="fab fa-youtube text-red-600 text-xl"></i>
+                                   </div>
+                                   <div>
+                                        <h4 class="font-semibold text-gray-900 dark:text-white">YouTube Ads</h4>
+                                        <p class="text-xs text-gray-500 dark:text-gray-300">Video Advertising</p>
+                                   </div>
+                              </div>
+                              <span
+                                   class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">Conectado</span>
+                         </div>
+                         <div class="space-y-2 mb-4">
+                              <div class="flex justify-between text-sm">
+                                   <span class="text-gray-600 dark:text-gray-300">Campanhas:</span>
+                                   <span class="font-medium text-gray-900 dark:text-white">8</span>
+                              </div>
+                              <div class="flex justify-between text-sm">
+                                   <span class="text-gray-600 dark:text-gray-300">Gasto Hoje:</span>
+                                   <span class="font-medium text-green-600 dark:text-green-400">R$ 567</span>
+                              </div>
+                              <div class="flex justify-between text-sm">
+                                   <span class="text-gray-600 dark:text-gray-300">Última Sync:</span>
+                                   <span class="font-medium text-gray-900 dark:text-white">4 min atrás</span>
+                              </div>
+                         </div>
+                         <div class="flex space-x-2">
+                              <button onclick="configurePlatform('youtube')"
+                                   class="flex-1 bg-gray-100 text-gray-700 py-2 px-3 rounded-lg text-sm hover:bg-gray-200">
+                                   <i class="fas fa-cog mr-1"></i>Config
+                              </button>
+                              <button onclick="syncPlatform('youtube')"
+                                   class="flex-1 bg-red-600 text-white py-2 px-3 rounded-lg text-sm hover:bg-red-700">
+                                   <i class="fas fa-sync-alt mr-1"></i>Sync
+                              </button>
+                         </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-[#444B57] p-6 rounded-xl shadow-sm card-hover border-2 transition-colors duration-300"
+                         style="border-color: #9AAFB0; border-radius: 12px;">
+                         <div class="flex items-center justify-between mb-4">
+                              <div class="flex items-center space-x-3">
+                                   <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                                        <i class="fab fa-pinterest text-red-500 text-xl"></i>
+                                   </div>
+                                   <div>
+                                        <h4 class="font-semibold text-gray-900 dark:text-white">Pinterest Ads</h4>
+                                        <p class="text-xs text-gray-500 dark:text-gray-300">Visual Discovery</p>
+                                   </div>
+                              </div>
+                              <span
+                                   class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">Conectado</span>
+                         </div>
+                         <div class="space-y-2 mb-4">
+                              <div class="flex justify-between text-sm">
+                                   <span class="text-gray-600 dark:text-gray-300">Campanhas:</span>
+                                   <span class="font-medium text-gray-900 dark:text-white">6</span>
+                              </div>
+                              <div class="flex justify-between text-sm">
+                                   <span class="text-gray-600 dark:text-gray-300">Gasto Hoje:</span>
+                                   <span class="font-medium text-green-600 dark:text-green-400">R$ 234</span>
+                              </div>
+                              <div class="flex justify-between text-sm">
+                                   <span class="text-gray-600 dark:text-gray-300">Última Sync:</span>
+                                   <span class="font-medium text-gray-900 dark:text-white">7 min atrás</span>
+                              </div>
+                         </div>
+                         <div class="flex space-x-2">
+                              <button onclick="configurePlatform('pinterest')"
+                                   class="flex-1 bg-gray-100 text-gray-700 py-2 px-3 rounded-lg text-sm hover:bg-gray-200">
+                                   <i class="fas fa-cog mr-1"></i>Config
+                              </button>
+                              <button onclick="syncPlatform('pinterest')"
+                                   class="flex-1 bg-red-500 text-white py-2 px-3 rounded-lg text-sm hover:bg-red-600">
+                                   <i class="fas fa-sync-alt mr-1"></i>Sync
+                              </button>
+                         </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-[#444B57] p-6 rounded-xl shadow-sm card-hover border-2 transition-colors duration-300"
+                         style="border-color: #9AAFB0; border-radius: 12px;">
+                         <div class="flex items-center justify-between mb-4">
+                              <div class="flex items-center space-x-3">
+                                   <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                                        <i class="fab fa-snapchat text-yellow-400 text-xl"></i>
+                                   </div>
+                                   <div>
+                                        <h4 class="font-semibold text-gray-900 dark:text-white">Snapchat Ads</h4>
+                                        <p class="text-xs text-gray-500 dark:text-gray-300">Mobile First</p>
+                                   </div>
+                              </div>
+                              <span
+                                   class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium">Pendente</span>
+                         </div>
+                         <div class="space-y-2 mb-4">
+                              <div class="flex justify-between text-sm">
+                                   <span class="text-gray-600 dark:text-gray-300">Campanhas:</span>
+                                   <span class="font-medium text-gray-900 dark:text-white">-</span>
+                              </div>
+                              <div class="flex justify-between text-sm">
+                                   <span class="text-gray-600 dark:text-gray-300">Status:</span>
+                                   <span class="font-medium text-yellow-600 dark:text-yellow-400">Em análise</span>
+                              </div>
+                              <div class="flex justify-between text-sm">
+                                   <span class="text-gray-600 dark:text-gray-300">Configuração:</span>
+                                   <span class="font-medium text-gray-900 dark:text-white">30%</span>
+                              </div>
+                         </div>
+                         <div class="flex space-x-2">
+                              <button onclick="configurePlatform('snapchat')"
+                                   class="flex-1 bg-gray-100 text-gray-700 py-2 px-3 rounded-lg text-sm hover:bg-gray-200">
+                                   <i class="fas fa-cog mr-1"></i>Config
+                              </button>
+                              <button onclick="connectPlatform('snapchat')"
+                                   class="flex-1 bg-yellow-400 text-white py-2 px-3 rounded-lg text-sm hover:bg-yellow-500">
+                                   <i class="fas fa-plug mr-1"></i>Conectar
+                              </button>
+                         </div>
+                    </div>
+               </div>
+
+               <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm transition-colors duration-300">
+                    <div class="p-6 border-b border-gray-200 dark:border-gray-600">
+                         <div class="flex items-center justify-between">
+                              <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Log de Atividades das
+                                   Integrações</h4>
+                              <div class="flex space-x-2">
+                                   <select
+                                        class="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 text-sm transition-colors duration-300">
+                                        <option>Todas as plataformas</option>
+                                        <option>Google Ads</option>
+                                        <option>Meta Ads</option>
+                                        <option>LinkedIn Ads</option>
+                                        <option>TikTok Ads</option>
+                                   </select>
+                                   <button onclick="clearIntegrationLog()"
+                                        class="text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm transition-colors duration-300">
+                                        <i class="fas fa-trash mr-1"></i>Limpar
+                                   </button>
+                              </div>
+                         </div>
+                    </div>
+                    <div class="p-6">
+                         <div id="integrationLog" class="space-y-4 max-h-96 overflow-y-auto">
+                         </div>
+                    </div>
+               </div>
+          </div>
+
+          <div id="users-section" class="p-6 hidden">
+               <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-semibold">Controle de Usuários</h3>
+                    <button onclick="openUserModal()"
+                         class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                         <i class="fas fa-plus mr-2"></i>Novo Usuário
+                    </button>
+               </div>
+
+               <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm transition-colors duration-300">
+                    <div class="overflow-x-auto">
+                         <table class="w-full">
+                              <thead class="bg-gray-50 dark:bg-gray-700">
+                                   <tr>
+                                        <th
+                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                             Usuário</th>
+                                        <th
+                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                             Email</th>
+                                        <th
+                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                             Perfil</th>
+                                        <th
+                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                             Status</th>
+                                        <th
+                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                             Último Acesso</th>
+                                        <th
+                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                             Ações</th>
+                                   </tr>
+                              </thead>
+                              <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                                   <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                             <div class="flex items-center">
+                                                  <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%234F46E5'/%3E%3Ctext x='16' y='20' text-anchor='middle' fill='white' font-family='Arial' font-size='12' font-weight='bold'%3EA%3C/text%3E%3C/svg%3E"
+                                                       alt="User" class="w-8 h-8 rounded-full mr-3">
+                                                  <span class="font-medium text-gray-900 dark:text-gray-100">Admin
+                                                       User</span>
+                                             </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">
+                                             admin@trafficpro.com</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                             <span
+                                                  class="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs">Administrador</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                             <span
+                                                  class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Ativo</span>
+                                        </td>
+                                        <td
+                                             class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                             Agora</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                             <button class="text-blue-600 hover:text-blue-800 mr-2">Editar</button>
+                                             <button class="text-red-600 hover:text-red-800">Desativar</button>
+                                        </td>
+                                   </tr>
+                              </tbody>
+                         </table>
+                    </div>
+               </div>
+          </div>
+     </div>
+
+     <div id="editClientModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+          <div class="flex items-center justify-center min-h-screen p-4">
+               <div class="bg-white rounded-xl p-6 w-full max-w-md">
+                    <h3 class="text-lg font-semibold mb-4">Editar Cliente</h3>
+                    <form id="editClientForm" class="space-y-4">
+                         <div>
+                              <label class="block text-sm font-medium text-gray-700 mb-2">Nome da Empresa</label>
+                              <input type="text" id="editClientName"
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2" required>
+                         </div>
+                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                   <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                                   <input type="email" id="editClientEmail"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2" required>
+                              </div>
+                              <div>
+                                   <label class="block text-sm font-medium text-gray-700 mb-2">Telefone</label>
+                                   <input type="tel" id="editClientPhone"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2"
+                                        placeholder="(11) 99999-9999" required>
+                              </div>
+                         </div>
+                         <div>
+                              <label class="block text-sm font-medium text-gray-700 mb-2">Segmento</label>
+                              <select id="editClientSegment" class="w-full border border-gray-300 rounded-lg px-3 py-2"
+                                   required>
+                                   <option value="">Selecione...</option>
+                                   <option value="E-commerce">E-commerce</option>
+                                   <option value="B2B">B2B</option>
+                                   <option value="Serviços">Serviços</option>
+                                   <option value="Saúde">Saúde</option>
+                                   <option value="Educação">Educação</option>
+                              </select>
+                         </div>
+                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                   <label class="block text-sm font-medium text-gray-700 mb-2">Orçamento Mensal
+                                        (R$)</label>
+                                   <input type="number" id="editClientBudget"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2" required>
+                              </div>
+                              <div>
+                                   <label class="block text-sm font-medium text-gray-700 mb-2">Orçamento Total
+                                        (R$)</label>
+                                   <input type="number" id="editClientTotalBudget"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2" required>
+                              </div>
+                         </div>
+                         <div>
+                              <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                              <select id="editClientStatus" class="w-full border border-gray-300 rounded-lg px-3 py-2"
+                                   required>
+                                   <option value="Ativo">Ativo</option>
+                                   <option value="Pausado">Pausado</option>
+                                   <option value="Inativo">Inativo</option>
+                              </select>
+                         </div>
+                         <div class="flex space-x-3">
+                              <button type="button" onclick="closeEditClientModal()"
+                                   class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg">Cancelar</button>
+                              <button type="submit" class="flex-1 bg-blue-600 text-white py-2 rounded-lg">Salvar
+                                   Alterações</button>
+                         </div>
+                    </form>
+               </div>
+          </div>
+     </div>
+
+     <div id="clientReportModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+          <div class="flex items-center justify-center min-h-screen p-4">
+               <div
+                    class="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-6xl max-h-screen overflow-y-auto transition-colors duration-300">
+                    <div class="flex justify-between items-center mb-6">
+                         <div class="flex-1">
+                              <div id="clientInfoHeader" class="gradient-bg text-white p-6 rounded-xl mb-4">
+                                   <h3 class="text-2xl font-bold mb-2" id="reportClientName">Relatório do Cliente</h3>
+                                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                        <div>
+                                             <p class="text-white/80">Email:</p>
+                                             <p class="font-medium" id="reportClientEmail">-</p>
+                                        </div>
+                                        <div>
+                                             <p class="text-white/80">Segmento:</p>
+                                             <p class="font-medium" id="reportClientSegment">-</p>
+                                        </div>
+                                   </div>
+                              </div>
+                         </div>
+                         <button onclick="closeClientReportModal()"
+                              class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 ml-4 transition-colors duration-300">
+                              <i class="fas fa-times text-xl"></i>
+                         </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                         <div
+                              class="metric-card text-white p-4 rounded-xl shadow-lg transform hover:scale-105 transition-all duration-200">
+                              <div class="flex items-center justify-between">
+                                   <div>
+                                        <p class="text-white/80 text-sm">Orçamento Total</p>
+                                        <p class="text-xl font-bold" id="reportBudget">R$ 0</p>
+                                   </div>
+                                   <i class="fas fa-wallet text-2xl text-white/60"></i>
+                              </div>
+                         </div>
+                         <div
+                              class="metric-card-2 text-white p-4 rounded-xl shadow-lg transform hover:scale-105 transition-all duration-200">
+                              <div class="flex items-center justify-between">
+                                   <div>
+                                        <p class="text-white/80 text-sm">Campanhas Ativas</p>
+                                        <p class="text-xl font-bold" id="reportActiveCampaigns">0</p>
+                                   </div>
+                                   <i class="fas fa-bullhorn text-2xl text-white/60"></i>
+                              </div>
+                         </div>
+                         <div
+                              class="metric-card-3 text-white p-4 rounded-xl shadow-lg transform hover:scale-105 transition-all duration-200">
+                              <div class="flex items-center justify-between">
+                                   <div>
+                                        <p class="text-white/80 text-sm">ROAS Médio</p>
+                                        <p class="text-xl font-bold" id="reportAvgRoas">0x</p>
+                                   </div>
+                                   <i class="fas fa-chart-line text-2xl text-white/60"></i>
+                              </div>
+                         </div>
+                         <div
+                              class="metric-card-4 text-white p-4 rounded-xl shadow-lg transform hover:scale-105 transition-all duration-200">
+                              <div class="flex items-center justify-between">
+                                   <div>
+                                        <p class="text-white/80 text-sm">Conversões</p>
+                                        <p class="text-xl font-bold" id="reportConversions">0</p>
+                                   </div>
+                                   <i class="fas fa-target text-2xl text-white/60"></i>
+                              </div>
+                         </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+                         <div
+                              class="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-6 rounded-xl transition-colors duration-300">
+                              <h4 class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">Distribuição por
+                                   Canal</h4>
+                              <div class="h-64">
+                                   <canvas id="clientChannelChart"></canvas>
+                              </div>
+                         </div>
+                         <div
+                              class="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-6 rounded-xl transition-colors duration-300">
+                              <h4 class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">Performance por
+                                   Plataforma</h4>
+                              <div class="h-64">
+                                   <canvas id="clientPlatformChart"></canvas>
+                              </div>
+                         </div>
+                         <div
+                              class="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-6 rounded-xl transition-colors duration-300">
+                              <h4 class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">Investimento vs
+                                   Retorno</h4>
+                              <div class="h-64">
+                                   <canvas id="clientROIChart"></canvas>
+                              </div>
+                         </div>
+                         <div
+                              class="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-6 rounded-xl transition-colors duration-300">
+                              <h4 class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">Resumo Financeiro
+                              </h4>
+                              <div class="space-y-4">
+                                   <div class="flex justify-between items-center">
+                                        <span class="text-gray-600 dark:text-gray-300">Orçamento Total:</span>
+                                        <span class="font-bold text-lg text-gray-800 dark:text-gray-100"
+                                             id="financeTotal">R$ 0</span>
+                                   </div>
+                                   <div class="flex justify-between items-center">
+                                        <span class="text-gray-600 dark:text-gray-300">Investido:</span>
+                                        <span class="font-bold text-blue-600 dark:text-blue-400" id="financeSpent">R$
+                                             0</span>
+                                   </div>
+                                   <div class="flex justify-between items-center">
+                                        <span class="text-gray-600 dark:text-gray-300">Disponível:</span>
+                                        <span class="font-bold text-green-600 dark:text-green-400"
+                                             id="financeAvailable">R$ 0</span>
+                                   </div>
+                                   <hr class="my-3 border-gray-200 dark:border-gray-600">
+                                   <div class="flex justify-between items-center">
+                                        <span class="text-gray-600 dark:text-gray-300">Receita Gerada:</span>
+                                        <span class="font-bold text-green-600 dark:text-green-400 text-lg"
+                                             id="financeRevenue">R$ 0</span>
+                                   </div>
+                                   <div class="flex justify-between items-center">
+                                        <span class="text-gray-600 dark:text-gray-300">Lucro Líquido:</span>
+                                        <span class="font-bold text-purple-600 dark:text-purple-400 text-lg"
+                                             id="financeProfit">R$ 0</span>
+                                   </div>
+                                   <div
+                                        class="bg-gray-50 dark:bg-gray-600 p-3 rounded-lg transition-colors duration-300">
+                                        <div class="flex justify-between items-center">
+                                             <span class="text-gray-600 dark:text-gray-300 text-sm">Taxa de
+                                                  Conversão:</span>
+                                             <span class="font-bold text-gray-800 dark:text-gray-100"
+                                                  id="financeConversionRate">0%</span>
+                                        </div>
+                                        <div class="flex justify-between items-center mt-1">
+                                             <span class="text-gray-600 dark:text-gray-300 text-sm">CPA Médio:</span>
+                                             <span class="font-bold text-gray-800 dark:text-gray-100" id="financeCPA">R$
+                                                  0</span>
+                                        </div>
+                                   </div>
+                              </div>
+                         </div>
+                    </div>
+
+                    <div
+                         class="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl transition-colors duration-300">
+                         <div class="p-6 border-b border-gray-200 dark:border-gray-600">
+                              <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Campanhas do Cliente
+                              </h4>
+                         </div>
+                         <div class="overflow-x-auto">
+                              <table class="w-full">
+                                   <thead class="bg-gray-50 dark:bg-gray-600">
+                                        <tr>
+                                             <th
+                                                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                                  Campanha</th>
+                                             <th
+                                                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                                  Canal</th>
+                                             <th
+                                                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                                  Período</th>
+                                             <th
+                                                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                                  Orçamento</th>
+                                             <th
+                                                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                                  Gasto</th>
+                                             <th
+                                                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                                  ROAS</th>
+                                             <th
+                                                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                                  Status</th>
+                                        </tr>
+                                   </thead>
+                                   <tbody id="clientCampaignsTable"
+                                        class="divide-y divide-gray-200 dark:divide-gray-600">
+                                   </tbody>
+                              </table>
+                         </div>
+                    </div>
+               </div>
+          </div>
+     </div>
+
+     <div id="clientModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+          <div class="flex items-center justify-center min-h-screen p-4">
+               <div class="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-md transition-colors duration-300">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">Novo Cliente</h3>
+                    <form id="clientForm" class="space-y-4">
+                         <div>
+                              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nome da
+                                   Empresa</label>
+                              <input type="text" id="clientName"
+                                   class="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 transition-colors duration-300"
+                                   required>
+                         </div>
+                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                   <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                                   <input type="email" id="clientEmail"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2" required>
+                              </div>
+                              <div>
+                                   <label class="block text-sm font-medium text-gray-700 mb-2">Telefone</label>
+                                   <input type="tel" id="clientPhone"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2"
+                                        placeholder="(11) 99999-9999" required>
+                              </div>
+                         </div>
+                         <div>
+                              <label class="block text-sm font-medium text-gray-700 mb-2">Segmento</label>
+                              <select id="clientSegment" class="w-full border border-gray-300 rounded-lg px-3 py-2"
+                                   required>
+                                   <option value="">Selecione...</option>
+                                   <option value="E-commerce">E-commerce</option>
+                                   <option value="B2B">B2B</option>
+                                   <option value="Serviços">Serviços</option>
+                                   <option value="Saúde">Saúde</option>
+                                   <option value="Educação">Educação</option>
+                              </select>
+                         </div>
+                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                   <label class="block text-sm font-medium text-gray-700 mb-2">Orçamento Mensal
+                                        (R$)</label>
+                                   <input type="number" id="clientBudget"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2" required>
+                              </div>
+                              <div>
+                                   <label class="block text-sm font-medium text-gray-700 mb-2">Orçamento Total
+                                        (R$)</label>
+                                   <input type="number" id="clientTotalBudget"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2" required>
+                              </div>
+                         </div>
+                         <div class="flex space-x-3">
+                              <button type="button" onclick="closeClientModal()"
+                                   class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg">Cancelar</button>
+                              <button type="submit"
+                                   class="flex-1 bg-blue-600 text-white py-2 rounded-lg">Salvar</button>
+                         </div>
+                    </form>
+               </div>
+          </div>
+     </div>
+
+     <div id="cancelModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+          <div class="flex items-center justify-center min-h-screen p-4">
+               <div class="bg-white rounded-xl p-6 w-full max-w-2xl">
+                    <div class="flex items-center justify-between mb-6">
+                         <div class="flex items-center">
+                              <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mr-4">
+                                   <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                              </div>
+                              <div>
+                                   <h3 class="text-xl font-bold text-gray-900">Cancelar Campanha</h3>
+                                   <p class="text-gray-600">Esta ação pode ser revertida posteriormente</p>
+                              </div>
+                         </div>
+                         <button onclick="closeCancelModal()" class="text-gray-400 hover:text-gray-600">
+                              <i class="fas fa-times text-xl"></i>
+                         </button>
+                    </div>
+
+                    <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                         <h4 class="font-semibold text-gray-800 mb-3">Informações da Campanha</h4>
+                         <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                              <div>
+                                   <span class="text-gray-500">Nome:</span>
+                                   <p class="font-medium" id="cancelCampaignName">-</p>
+                              </div>
+                              <div>
+                                   <span class="text-gray-500">Cliente:</span>
+                                   <p class="font-medium" id="cancelCampaignClient">-</p>
+                              </div>
+                              <div>
+                                   <span class="text-gray-500">Canal:</span>
+                                   <p class="font-medium" id="cancelCampaignChannel">-</p>
+                              </div>
+                              <div>
+                                   <span class="text-gray-500">Orçamento:</span>
+                                   <p class="font-medium text-blue-600" id="cancelCampaignBudget">-</p>
+                              </div>
+                              <div>
+                                   <span class="text-gray-500">Gasto:</span>
+                                   <p class="font-medium text-orange-600" id="cancelCampaignSpent">-</p>
+                              </div>
+                              <div>
+                                   <span class="text-gray-500">Restante:</span>
+                                   <p class="font-medium text-green-600" id="cancelCampaignRemaining">-</p>
+                              </div>
+                              <div>
+                                   <span class="text-gray-500">ROAS:</span>
+                                   <p class="font-medium text-purple-600" id="cancelCampaignRoas">-</p>
+                              </div>
+                         </div>
+                    </div>
+
+                    <div class="space-y-4">
+                         <div>
+                              <label class="block text-sm font-medium text-gray-700 mb-2">
+                                   <i class="fas fa-clipboard-list mr-2 text-red-500"></i>
+                                   Motivo do Cancelamento *
+                              </label>
+                              <select id="cancelReason"
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                                   required>
+                                   <option value="">Selecione o motivo...</option>
+                                   <option value="Orçamento Esgotado">Orçamento Esgotado</option>
+                                   <option value="Performance Baixa">Performance Baixa</option>
+                                   <option value="Mudança de Estratégia">Mudança de Estratégia</option>
+                                   <option value="Solicitação do Cliente">Solicitação do Cliente</option>
+                                   <option value="Problemas Técnicos">Problemas Técnicos</option>
+                                   <option value="Sazonalidade">Sazonalidade</option>
+                                   <option value="Concorrência">Concorrência</option>
+                                   <option value="Outros">Outros</option>
+                              </select>
+                         </div>
+
+                         <div>
+                              <label class="block text-sm font-medium text-gray-700 mb-2">
+                                   <i class="fas fa-sticky-note mr-2 text-gray-500"></i>
+                                   Observações Adicionais
+                              </label>
+                              <textarea id="cancelNotes"
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 h-20 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                                   placeholder="Descreva detalhes sobre o cancelamento, próximos passos, etc."></textarea>
+                         </div>
+
+                         <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                              <div class="flex items-start">
+                                   <i class="fas fa-info-circle text-yellow-600 mt-1 mr-3"></i>
+                                   <div class="text-sm">
+                                        <p class="font-medium text-yellow-800 mb-1">O que acontece ao cancelar:</p>
+                                        <ul class="text-yellow-700 space-y-1">
+                                             <li>• A campanha será marcada como "Cancelada"</li>
+                                             <li>• Aparecerá riscada na lista de campanhas</li>
+                                             <li>• Pode ser reativada a qualquer momento</li>
+                                             <li>• O histórico e dados serão preservados</li>
+                                        </ul>
+                                   </div>
+                              </div>
+                         </div>
+                    </div>
+
+                    <div class="flex space-x-3 mt-6">
+                         <button type="button" onclick="closeCancelModal()"
+                              class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200 transition-colors font-medium">
+                              <i class="fas fa-times mr-2"></i>Cancelar
+                         </button>
+                         <button type="button" onclick="confirmCancelCampaign()"
+                              class="flex-1 bg-red-600 text-white py-3 rounded-lg hover:bg-red-700 transition-colors font-medium">
+                              <i class="fas fa-ban mr-2"></i>Confirmar Cancelamento
+                         </button>
+                    </div>
+               </div>
+          </div>
+     </div>
+
+     <div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+          <div class="flex items-center justify-center min-h-screen p-4">
+               <div class="bg-white rounded-xl p-6 w-full max-w-2xl">
+                    <div class="flex items-center justify-between mb-6">
+                         <div class="flex items-center">
+                              <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mr-4">
+                                   <i class="fas fa-trash-alt text-red-600 text-xl"></i>
+                              </div>
+                              <div>
+                                   <h3 class="text-xl font-bold text-gray-900">Excluir Campanha</h3>
+                                   <p class="text-gray-600">Esta ação é permanente e não pode ser desfeita</p>
+                              </div>
+                         </div>
+                         <button onclick="closeDeleteModal()" class="text-gray-400 hover:text-gray-600">
+                              <i class="fas fa-times text-xl"></i>
+                         </button>
+                    </div>
+
+                    <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                         <h4 class="font-semibold text-gray-800 mb-3">Informações da Campanha</h4>
+                         <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                              <div>
+                                   <span class="text-gray-500">Nome:</span>
+                                   <p class="font-medium" id="deleteCampaignName">-</p>
+                              </div>
+                              <div>
+                                   <span class="text-gray-500">Cliente:</span>
+                                   <p class="font-medium" id="deleteCampaignClient">-</p>
+                              </div>
+                              <div>
+                                   <span class="text-gray-500">Canal:</span>
+                                   <p class="font-medium" id="deleteCampaignChannel">-</p>
+                              </div>
+                              <div>
+                                   <span class="text-gray-500">Orçamento:</span>
+                                   <p class="font-medium text-blue-600" id="deleteCampaignBudget">-</p>
+                              </div>
+                              <div>
+                                   <span class="text-gray-500">Gasto:</span>
+                                   <p class="font-medium text-orange-600" id="deleteCampaignSpent">-</p>
+                              </div>
+                              <div>
+                                   <span class="text-gray-500">ROAS:</span>
+                                   <p class="font-medium text-purple-600" id="deleteCampaignRoas">-</p>
+                              </div>
+                              <div>
+                                   <span class="text-gray-500">Status:</span>
+                                   <p class="font-medium" id="deleteCampaignStatus">-</p>
+                              </div>
+                              <div>
+                                   <span class="text-gray-500">Período:</span>
+                                   <p class="font-medium" id="deleteCampaignPeriod">-</p>
+                              </div>
+                         </div>
+                    </div>
+
+                    <div class="space-y-4">
+                         <div>
+                              <label class="block text-sm font-medium text-gray-700 mb-2">
+                                   <i class="fas fa-clipboard-list mr-2 text-red-500"></i>
+                                   Motivo da Exclusão *
+                              </label>
+                              <select id="deleteReason"
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                                   required>
+                                   <option value="">Selecione o motivo...</option>
+                                   <option value="Campanha Finalizada">Campanha Finalizada</option>
+                                   <option value="Performance Insatisfatória">Performance Insatisfatória</option>
+                                   <option value="Mudança de Estratégia">Mudança de Estratégia</option>
+                                   <option value="Orçamento Redirecionado">Orçamento Redirecionado</option>
+                                   <option value="Erro na Criação">Erro na Criação</option>
+                                   <option value="Duplicata">Duplicata</option>
+                                   <option value="Solicitação do Cliente">Solicitação do Cliente</option>
+                                   <option value="Limpeza de Dados">Limpeza de Dados</option>
+                                   <option value="Outros">Outros</option>
+                              </select>
+                         </div>
+
+                         <div>
+                              <label class="block text-sm font-medium text-gray-700 mb-2">
+                                   <i class="fas fa-sticky-note mr-2 text-gray-500"></i>
+                                   Observações Finais
+                              </label>
+                              <textarea id="deleteNotes"
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 h-20 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                                   placeholder="Registre informações importantes sobre esta exclusão, resultados obtidos, lições aprendidas, etc."></textarea>
+                         </div>
+
+                         <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                              <div class="flex items-start">
+                                   <i class="fas fa-exclamation-triangle text-red-600 mt-1 mr-3"></i>
+                                   <div class="text-sm">
+                                        <p class="font-medium text-red-800 mb-1">⚠️ ATENÇÃO - Exclusão Permanente:</p>
+                                        <ul class="text-red-700 space-y-1">
+                                             <li>• A campanha será removida permanentemente do sistema</li>
+                                             <li>• Todos os dados e histórico serão perdidos</li>
+                                             <li>• Esta ação NÃO pode ser desfeita</li>
+                                             <li>• Considere cancelar ao invés de excluir para manter histórico</li>
+                                        </ul>
+                                   </div>
+                              </div>
+                         </div>
+
+                         <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                              <label class="flex items-start space-x-3">
+                                   <input type="checkbox" id="deleteConfirmation"
+                                        class="mt-1 h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded">
+                                   <span class="text-sm text-gray-700">
+                                        <span class="font-medium">Confirmo que entendo as consequências</span><br>
+                                        Estou ciente de que esta ação é irreversível e todos os dados da campanha serão
+                                        perdidos permanentemente.
+                                   </span>
+                              </label>
+                         </div>
+                    </div>
+
+                    <div class="flex space-x-3 mt-6">
+                         <button type="button" onclick="closeDeleteModal()"
+                              class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200 transition-colors font-medium">
+                              <i class="fas fa-times mr-2"></i>Cancelar
+                         </button>
+                         <button type="button" onclick="confirmDeleteCampaign()"
+                              class="flex-1 bg-red-600 text-white py-3 rounded-lg hover:bg-red-700 transition-colors font-medium">
+                              <i class="fas fa-trash-alt mr-2"></i>Confirmar Exclusão
+                         </button>
+                    </div>
+               </div>
+          </div>
+     </div>
+
+     <div id="logModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+          <div class="flex items-center justify-center min-h-screen p-4">
+               <div class="bg-white rounded-xl p-6 w-full max-w-lg">
+                    <div class="flex items-center justify-between mb-4">
+                         <h3 id="logModalTitle" class="text-lg font-bold text-gray-900">Log da Campanha</h3>
+                         <button onclick="closeLogModal()" class="text-gray-400 hover:text-gray-600">
+                              <i class="fas fa-times text-xl"></i>
+                         </button>
+                    </div>
+
+                    <div id="logModalContent" class="mb-6">
+                    </div>
+
+                    <div class="flex justify-end">
+                         <button onclick="closeLogModal()"
+                              class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                              <i class="fas fa-check mr-2"></i>Entendido
+                         </button>
+                    </div>
+               </div>
+          </div>
+     </div>
+
+     <div id="reportModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+          <div class="flex items-center justify-center min-h-screen p-4">
+               <div class="bg-white rounded-xl p-6 w-full max-w-4xl max-h-screen overflow-y-auto">
+                    <div class="flex items-center justify-between mb-6">
+                         <h3 class="text-xl font-bold text-gray-900">Configurar Relatório Personalizado</h3>
+                         <button onclick="closeReportModal()" class="text-gray-400 hover:text-gray-600">
+                              <i class="fas fa-times text-xl"></i>
+                         </button>
+                    </div>
+
+                    <form id="reportForm" class="space-y-6">
+                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              <div>
+                                   <label class="block text-sm font-medium text-gray-700 mb-2">Nome do Relatório</label>
+                                   <input type="text" id="reportName"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2"
+                                        placeholder="Ex: Relatório Mensal Novembro" required>
+                              </div>
+                              <div>
+                                   <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de Relatório</label>
+                                   <select id="reportType" class="w-full border border-gray-300 rounded-lg px-3 py-2"
+                                        required>
+                                        <option value="">Selecione o tipo...</option>
+                                        <option value="geral">Relatório Geral</option>
+                                        <option value="performance">Análise de Performance</option>
+                                        <option value="financeiro">Relatório Financeiro</option>
+                                        <option value="comparativo">Análise Comparativa</option>
+                                        <option value="cliente">Por Cliente</option>
+                                        <option value="canal">Por Canal</option>
+                                   </select>
+                              </div>
+                         </div>
+
+                         <div>
+                              <label class="block text-sm font-medium text-gray-700 mb-2">Período de Análise</label>
+                              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                   <div>
+                                        <label class="block text-xs text-gray-500 mb-1">Data Inicial</label>
+                                        <input type="date" id="reportStartDate"
+                                             class="w-full border border-gray-300 rounded-lg px-3 py-2" required>
+                                   </div>
+                                   <div>
+                                        <label class="block text-xs text-gray-500 mb-1">Data Final</label>
+                                        <input type="date" id="reportEndDate"
+                                             class="w-full border border-gray-300 rounded-lg px-3 py-2" required>
+                                   </div>
+                                   <div>
+                                        <label class="block text-xs text-gray-500 mb-1">Período Pré-definido</label>
+                                        <select id="reportPeriodPreset"
+                                             class="w-full border border-gray-300 rounded-lg px-3 py-2"
+                                             onchange="setPresetDates()">
+                                             <option value="">Personalizado</option>
+                                             <option value="today">Hoje</option>
+                                             <option value="yesterday">Ontem</option>
+                                             <option value="last7days">Últimos 7 dias</option>
+                                             <option value="last30days">Últimos 30 dias</option>
+                                             <option value="thisMonth">Este mês</option>
+                                             <option value="lastMonth">Mês passado</option>
+                                             <option value="thisYear">Este ano</option>
+                                        </select>
+                                   </div>
+                              </div>
+                         </div>
+
+                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              <div>
+                                   <label class="block text-sm font-medium text-gray-700 mb-2">Clientes</label>
+                                   <div class="border border-gray-300 rounded-lg p-3 max-h-32 overflow-y-auto">
+                                        <label class="flex items-center mb-2">
+                                             <input type="checkbox" id="selectAllClients" class="mr-2"
+                                                  onchange="toggleAllClients()">
+                                             <span class="font-medium">Selecionar Todos</span>
+                                        </label>
+                                        <div id="clientsCheckboxes">
+                                        </div>
+                                   </div>
+                              </div>
+
+                              <div>
+                                   <label class="block text-sm font-medium text-gray-700 mb-2">Canais</label>
+                                   <div class="border border-gray-300 rounded-lg p-3 max-h-32 overflow-y-auto">
+                                        <label class="flex items-center mb-2">
+                                             <input type="checkbox" id="selectAllChannels" class="mr-2"
+                                                  onchange="toggleAllChannels()">
+                                             <span class="font-medium">Selecionar Todos</span>
+                                        </label>
+                                        <div id="channelsCheckboxes">
+                                             <label class="flex items-center mb-1">
+                                                  <input type="checkbox" name="channels" value="Google Ads"
+                                                       class="mr-2">
+                                                  <span>Google Ads</span>
+                                             </label>
+                                             <label class="flex items-center mb-1">
+                                                  <input type="checkbox" name="channels" value="Facebook Ads"
+                                                       class="mr-2">
+                                                  <span>Facebook Ads</span>
+                                             </label>
+                                             <label class="flex items-center mb-1">
+                                                  <input type="checkbox" name="channels" value="LinkedIn Ads"
+                                                       class="mr-2">
+                                                  <span>LinkedIn Ads</span>
+                                             </label>
+                                             <label class="flex items-center mb-1">
+                                                  <input type="checkbox" name="channels" value="Instagram Ads"
+                                                       class="mr-2">
+                                                  <span>Instagram Ads</span>
+                                             </label>
+                                             <label class="flex items-center mb-1">
+                                                  <input type="checkbox" name="channels" value="TikTok Ads"
+                                                       class="mr-2">
+                                                  <span>TikTok Ads</span>
+                                             </label>
+                                        </div>
+                                   </div>
+                              </div>
+                         </div>
+
+                         <div>
+                              <label class="block text-sm font-medium text-gray-700 mb-2">Status das Campanhas</label>
+                              <div class="flex flex-wrap gap-4">
+                                   <label class="flex items-center">
+                                        <input type="checkbox" name="status" value="Ativa" class="mr-2" checked>
+                                        <span>Ativas</span>
+                                   </label>
+                                   <label class="flex items-center">
+                                        <input type="checkbox" name="status" value="Pausada" class="mr-2">
+                                        <span>Pausadas</span>
+                                   </label>
+                                   <label class="flex items-center">
+                                        <input type="checkbox" name="status" value="Cancelada" class="mr-2">
+                                        <span>Canceladas</span>
+                                   </label>
+                                   <label class="flex items-center">
+                                        <input type="checkbox" name="status" value="Otimizando" class="mr-2">
+                                        <span>Otimizando</span>
+                                   </label>
+                              </div>
+                         </div>
+
+                         <div>
+                              <label class="block text-sm font-medium text-gray-700 mb-2">Métricas a Incluir</label>
+                              <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                   <label class="flex items-center">
+                                        <input type="checkbox" name="metrics" value="budget" class="mr-2" checked>
+                                        <span>Orçamento</span>
+                                   </label>
+                                   <label class="flex items-center">
+                                        <input type="checkbox" name="metrics" value="spent" class="mr-2" checked>
+                                        <span>Investimento</span>
+                                   </label>
+                                   <label class="flex items-center">
+                                        <input type="checkbox" name="metrics" value="revenue" class="mr-2" checked>
+                                        <span>Receita</span>
+                                   </label>
+                                   <label class="flex items-center">
+                                        <input type="checkbox" name="metrics" value="roas" class="mr-2" checked>
+                                        <span>ROAS</span>
+                                   </label>
+                                   <label class="flex items-center">
+                                        <input type="checkbox" name="metrics" value="roi" class="mr-2" checked>
+                                        <span>ROI</span>
+                                   </label>
+                                   <label class="flex items-center">
+                                        <input type="checkbox" name="metrics" value="conversions" class="mr-2">
+                                        <span>Conversões</span>
+                                   </label>
+                                   <label class="flex items-center">
+                                        <input type="checkbox" name="metrics" value="ctr" class="mr-2">
+                                        <span>CTR</span>
+                                   </label>
+                                   <label class="flex items-center">
+                                        <input type="checkbox" name="metrics" value="cpc" class="mr-2">
+                                        <span>CPC</span>
+                                   </label>
+                              </div>
+                         </div>
+
+                         <div>
+                              <label class="block text-sm font-medium text-gray-700 mb-2">Formato de Exportação</label>
+                              <div class="flex space-x-6">
+                                   <label class="flex items-center">
+                                        <input type="radio" name="format" value="pdf" class="mr-2" checked>
+                                        <i class="fas fa-file-pdf text-red-500 mr-1"></i>
+                                        <span>PDF</span>
+                                   </label>
+                                   <label class="flex items-center">
+                                        <input type="radio" name="format" value="excel" class="mr-2">
+                                        <i class="fas fa-file-excel text-green-500 mr-1"></i>
+                                        <span>Excel</span>
+                                   </label>
+                                   <label class="flex items-center">
+                                        <input type="radio" name="format" value="both" class="mr-2">
+                                        <i class="fas fa-files text-blue-500 mr-1"></i>
+                                        <span>Ambos</span>
+                                   </label>
+                              </div>
+                         </div>
+
+                         <div>
+                              <label class="block text-sm font-medium text-gray-700 mb-2">Opções Adicionais</label>
+                              <div class="space-y-2">
+                                   <label class="flex items-center">
+                                        <input type="checkbox" id="includeCharts" class="mr-2" checked>
+                                        <span>Incluir gráficos e visualizações</span>
+                                   </label>
+                                   <label class="flex items-center">
+                                        <input type="checkbox" id="includeComparison" class="mr-2">
+                                        <span>Incluir comparação com período anterior</span>
+                                   </label>
+                                   <label class="flex items-center">
+                                        <input type="checkbox" id="includeRecommendations" class="mr-2">
+                                        <span>Incluir recomendações e insights</span>
+                                   </label>
+                                   <label class="flex items-center">
+                                        <input type="checkbox" id="saveTemplate" class="mr-2">
+                                        <span>Salvar como modelo para futuros relatórios</span>
+                                   </label>
+                              </div>
+                         </div>
+
+                         <div>
+                              <label class="block text-sm font-medium text-gray-700 mb-2">Observações</label>
+                              <textarea id="reportNotes" class="w-full border border-gray-300 rounded-lg px-3 py-2 h-20"
+                                   placeholder="Adicione observações ou contexto específico para este relatório..."></textarea>
+                         </div>
+
+                         <div class="flex space-x-3 pt-4 border-t border-gray-200">
+                              <button type="button" onclick="closeReportModal()"
+                                   class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200 transition-colors">
+                                   <i class="fas fa-times mr-2"></i>Cancelar
+                              </button>
+                              <button type="button" onclick="previewReport()"
+                                   class="flex-1 bg-blue-100 text-blue-700 py-3 rounded-lg hover:bg-blue-200 transition-colors">
+                                   <i class="fas fa-eye mr-2"></i>Visualizar
+                              </button>
+                              <button type="submit"
+                                   class="flex-1 bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors">
+                                   <i class="fas fa-download mr-2"></i>Gerar Relatório
+                              </button>
+                         </div>
+                    </form>
+               </div>
+          </div>
+     </div>
+
+     <div id="integrationModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+          <div class="flex items-center justify-center min-h-screen p-4">
+               <div class="bg-white rounded-xl p-6 w-full max-w-4xl max-h-screen overflow-y-auto">
+                    <div class="flex items-center justify-between mb-6">
+                         <div class="flex items-center space-x-3">
+                              <div id="integrationIcon"
+                                   class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                   <i class="fab fa-google text-blue-600 text-xl"></i>
+                              </div>
+                              <div>
+                                   <h3 id="integrationTitle" class="text-xl font-bold text-gray-900">Configurar Google
+                                        Ads</h3>
+                                   <p id="integrationSubtitle" class="text-gray-600">Configure sua integração com o
+                                        Google Ads</p>
+                              </div>
+                         </div>
+                         <button onclick="closeIntegrationModal()" class="text-gray-400 hover:text-gray-600">
+                              <i class="fas fa-times text-xl"></i>
+                         </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                         <div class="lg:col-span-2">
+                              <form id="integrationForm" class="space-y-6">
+                                   <div class="bg-gray-50 p-6 rounded-lg">
+                                        <h4 class="text-lg font-semibold mb-4 flex items-center">
+                                             <i class="fas fa-key text-blue-600 mr-2"></i>
+                                             Configuração da API
+                                        </h4>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                             <div>
+                                                  <label class="block text-sm font-medium text-gray-700 mb-2">Client
+                                                       ID</label>
+                                                  <input type="text" id="clientId"
+                                                       class="w-full border border-gray-300 rounded-lg px-3 py-2"
+                                                       placeholder="Seu Client ID">
+                                             </div>
+                                             <div>
+                                                  <label class="block text-sm font-medium text-gray-700 mb-2">Client
+                                                       Secret</label>
+                                                  <input type="password" id="clientSecret"
+                                                       class="w-full border border-gray-300 rounded-lg px-3 py-2"
+                                                       placeholder="Seu Client Secret">
+                                             </div>
+                                             <div class="md:col-span-2">
+                                                  <label class="block text-sm font-medium text-gray-700 mb-2">Access
+                                                       Token</label>
+                                                  <input type="text" id="accessToken"
+                                                       class="w-full border border-gray-300 rounded-lg px-3 py-2"
+                                                       placeholder="Token de acesso">
+                                             </div>
+                                        </div>
+                                   </div>
+
+                                   <div class="bg-gray-50 p-6 rounded-lg">
+                                        <h4 class="text-lg font-semibold mb-4 flex items-center">
+                                             <i class="fas fa-sync-alt text-green-600 mr-2"></i>
+                                             Configurações de Sincronização
+                                        </h4>
+                                        <div class="space-y-4">
+                                             <div>
+                                                  <label class="block text-sm font-medium text-gray-700 mb-2">Frequência
+                                                       de Sincronização</label>
+                                                  <select id="syncFrequency"
+                                                       class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                                                       <option value="5">A cada 5 minutos</option>
+                                                       <option value="15">A cada 15 minutos</option>
+                                                       <option value="30">A cada 30 minutos</option>
+                                                       <option value="60">A cada 1 hora</option>
+                                                       <option value="360">A cada 6 horas</option>
+                                                       <option value="1440">Diariamente</option>
+                                                  </select>
+                                             </div>
+                                             <div>
+                                                  <label class="block text-sm font-medium text-gray-700 mb-2">Dados para
+                                                       Sincronizar</label>
+                                                  <div class="grid grid-cols-2 gap-4">
+                                                       <label class="flex items-center">
+                                                            <input type="checkbox" id="syncCampaigns" class="mr-2"
+                                                                 checked>
+                                                            <span>Campanhas</span>
+                                                       </label>
+                                                       <label class="flex items-center">
+                                                            <input type="checkbox" id="syncMetrics" class="mr-2"
+                                                                 checked>
+                                                            <span>Métricas</span>
+                                                       </label>
+                                                       <label class="flex items-center">
+                                                            <input type="checkbox" id="syncBudgets" class="mr-2"
+                                                                 checked>
+                                                            <span>Orçamentos</span>
+                                                       </label>
+                                                       <label class="flex items-center">
+                                                            <input type="checkbox" id="syncConversions" class="mr-2"
+                                                                 checked>
+                                                            <span>Conversões</span>
+                                                       </label>
+                                                  </div>
+                                             </div>
+                                        </div>
+                                   </div>
+
+                                   <div class="bg-gray-50 p-6 rounded-lg">
+                                        <h4 class="text-lg font-semibold mb-4 flex items-center">
+                                             <i class="fas fa-user-circle text-purple-600 mr-2"></i>
+                                             Contas Conectadas
+                                        </h4>
+                                        <div id="accountsList" class="space-y-3">
+                                        </div>
+                                        <button type="button" onclick="loadAccounts()"
+                                             class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                                             <i class="fas fa-refresh mr-2"></i>Carregar Contas
+                                        </button>
+                                   </div>
+
+                                   <div class="bg-gray-50 p-6 rounded-lg">
+                                        <h4 class="text-lg font-semibold mb-4 flex items-center">
+                                             <i class="fas fa-cogs text-orange-600 mr-2"></i>
+                                             Configurações Avançadas
+                                        </h4>
+                                        <div class="space-y-4">
+                                             <label class="flex items-center">
+                                                  <input type="checkbox" id="autoOptimization" class="mr-2">
+                                                  <span>Otimização automática de lances</span>
+                                             </label>
+                                             <label class="flex items-center">
+                                                  <input type="checkbox" id="alertsEnabled" class="mr-2" checked>
+                                                  <span>Alertas de performance</span>
+                                             </label>
+                                             <label class="flex items-center">
+                                                  <input type="checkbox" id="budgetAlerts" class="mr-2" checked>
+                                                  <span>Alertas de orçamento</span>
+                                             </label>
+                                             <div>
+                                                  <label class="block text-sm font-medium text-gray-700 mb-2">Limite de
+                                                       gasto diário (R$)</label>
+                                                  <input type="number" id="dailySpendLimit"
+                                                       class="w-full border border-gray-300 rounded-lg px-3 py-2"
+                                                       placeholder="Ex: 1000">
+                                             </div>
+                                        </div>
+                                   </div>
+                              </form>
+                         </div>
+
+                         <div class="space-y-6">
+                              <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                   <h4 class="text-lg font-semibold mb-4">Status da Conexão</h4>
+                                   <div id="connectionStatus" class="space-y-3">
+                                        <div class="flex items-center justify-between">
+                                             <span class="text-gray-600">Status:</span>
+                                             <span id="statusBadge"
+                                                  class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Conectado</span>
+                                        </div>
+                                        <div class="flex items-center justify-between">
+                                             <span class="text-gray-600">Última Sync:</span>
+                                             <span id="lastSyncTime" class="text-sm font-medium">2 min atrás</span>
+                                        </div>
+                                        <div class="flex items-center justify-between">
+                                             <span class="text-gray-600">Campanhas:</span>
+                                             <span id="campaignCount" class="text-sm font-medium">47</span>
+                                        </div>
+                                        <div class="flex items-center justify-between">
+                                             <span class="text-gray-600">Gasto Hoje:</span>
+                                             <span id="todaySpend" class="text-sm font-medium text-green-600">R$
+                                                  2.847</span>
+                                        </div>
+                                   </div>
+                                   <button onclick="testConnection()"
+                                        class="w-full mt-4 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
+                                        <i class="fas fa-plug mr-2"></i>Testar Conexão
+                                   </button>
+                              </div>
+
+                              <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                   <h4 class="text-lg font-semibold mb-4">Ações Rápidas</h4>
+                                   <div class="space-y-3">
+                                        <button onclick="syncNow()"
+                                             class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">
+                                             <i class="fas fa-sync-alt mr-2"></i>Sincronizar Agora
+                                        </button>
+                                        <button onclick="pauseSync()"
+                                             class="w-full bg-yellow-600 text-white py-2 rounded-lg hover:bg-yellow-700">
+                                             <i class="fas fa-pause mr-2"></i>Pausar Sync
+                                        </button>
+                                        <button onclick="resetConnection()"
+                                             class="w-full bg-red-600 text-white py-2 rounded-lg hover:bg-red-700">
+                                             <i class="fas fa-redo mr-2"></i>Resetar Conexão
+                                        </button>
+                                   </div>
+                              </div>
+
+                              <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                   <h4 class="text-lg font-semibold mb-4">Atividade Recente</h4>
+                                   <div id="recentActivity" class="space-y-3 text-sm">
+                                   </div>
+                              </div>
+                         </div>
+                    </div>
+
+                    <div class="flex space-x-3 mt-6 pt-6 border-t border-gray-200">
+                         <button type="button" onclick="closeIntegrationModal()"
+                              class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200 transition-colors">
+                              <i class="fas fa-times mr-2"></i>Cancelar
+                         </button>
+                         <button type="button" onclick="saveIntegrationConfig()"
+                              class="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                              <i class="fas fa-save mr-2"></i>Salvar Configurações
+                         </button>
+                         <button type="button" onclick="connectIntegration()"
+                              class="flex-1 bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors">
+                              <i class="fas fa-plug mr-2"></i>Conectar
+                         </button>
+                    </div>
+               </div>
+          </div>
+     </div>
+
+     <div id="newIntegrationModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+          <div class="flex items-center justify-center min-h-screen p-4">
+               <div class="bg-white rounded-xl p-6 w-full max-w-2xl">
+                    <div class="flex items-center justify-between mb-6">
+                         <h3 class="text-xl font-bold text-gray-900">Adicionar Nova Integração</h3>
+                         <button onclick="closeNewIntegrationModal()" class="text-gray-400 hover:text-gray-600">
+                              <i class="fas fa-times text-xl"></i>
+                         </button>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                         <div onclick="selectPlatformForIntegration('google')"
+                              class="p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 cursor-pointer transition-colors">
+                              <div class="flex flex-col items-center text-center">
+                                   <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-3">
+                                        <i class="fab fa-google text-red-600 text-xl"></i>
+                                   </div>
+                                   <h4 class="font-semibold">Google Ads</h4>
+                                   <p class="text-xs text-gray-500">Search & Display</p>
+                              </div>
+                         </div>
+
+                         <div onclick="selectPlatformForIntegration('meta')"
+                              class="p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 cursor-pointer transition-colors">
+                              <div class="flex flex-col items-center text-center">
+                                   <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-3">
+                                        <i class="fab fa-meta text-blue-600 text-xl"></i>
+                                   </div>
+                                   <h4 class="font-semibold">Meta Ads</h4>
+                                   <p class="text-xs text-gray-500">Facebook & Instagram</p>
+                              </div>
+                         </div>
+
+                         <div onclick="selectPlatformForIntegration('linkedin')"
+                              class="p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 cursor-pointer transition-colors">
+                              <div class="flex flex-col items-center text-center">
+                                   <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-3">
+                                        <i class="fab fa-linkedin text-blue-700 text-xl"></i>
+                                   </div>
+                                   <h4 class="font-semibold">LinkedIn Ads</h4>
+                                   <p class="text-xs text-gray-500">B2B Marketing</p>
+                              </div>
+                         </div>
+
+                         <div onclick="selectPlatformForIntegration('tiktok')"
+                              class="p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 cursor-pointer transition-colors">
+                              <div class="flex flex-col items-center text-center">
+                                   <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mb-3">
+                                        <i class="fab fa-tiktok text-black text-xl"></i>
+                                   </div>
+                                   <h4 class="font-semibold">TikTok Ads</h4>
+                                   <p class="text-xs text-gray-500">Video Marketing</p>
+                              </div>
+                         </div>
+
+                         <div onclick="selectPlatformForIntegration('x')"
+                              class="p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 cursor-pointer transition-colors">
+                              <div class="flex flex-col items-center text-center">
+                                   <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mb-3">
+                                        <i class="fab fa-x-twitter text-gray-800 text-xl"></i>
+                                   </div>
+                                   <h4 class="font-semibold">X Ads</h4>
+                                   <p class="text-xs text-gray-500">Twitter Advertising</p>
+                              </div>
+                         </div>
+
+                         <div onclick="selectPlatformForIntegration('youtube')"
+                              class="p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 cursor-pointer transition-colors">
+                              <div class="flex flex-col items-center text-center">
+                                   <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-3">
+                                        <i class="fab fa-youtube text-red-600 text-xl"></i>
+                                   </div>
+                                   <h4 class="font-semibold">YouTube Ads</h4>
+                                   <p class="text-xs text-gray-500">Video Advertising</p>
+                              </div>
+                         </div>
+                    </div>
+
+                    <div class="mt-6 pt-6 border-t border-gray-200">
+                         <button onclick="closeNewIntegrationModal()"
+                              class="w-full bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200 transition-colors">
+                              <i class="fas fa-times mr-2"></i>Cancelar
+                         </button>
+                    </div>
+               </div>
+          </div>
+     </div>
+
+     <div id="campaignModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+          <div class="flex items-center justify-center min-h-screen p-4">
+               <div class="bg-white rounded-xl p-6 w-full max-w-2xl max-h-screen overflow-y-auto">
+                    <h3 class="text-lg font-semibold mb-4">Nova Campanha</h3>
+                    <form id="campaignForm" class="space-y-4">
+                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                   <label class="block text-sm font-medium text-gray-700 mb-2">Nome da Campanha</label>
+                                   <input type="text" id="campaignName"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2" required>
+                              </div>
+                              <div>
+                                   <label class="block text-sm font-medium text-gray-700 mb-2">Cliente</label>
+                                   <select id="campaignClient"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2" required>
+                                        <option value="">Selecione o cliente...</option>
+                                        <option value="Loja Fashion">Loja Fashion</option>
+                                        <option value="TechCorp">TechCorp</option>
+                                        <option value="E-commerce Plus">E-commerce Plus</option>
+                                   </select>
+                              </div>
+                         </div>
+
+                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                   <label class="block text-sm font-medium text-gray-700 mb-2">Canal de Mídia</label>
+                                   <select id="campaignChannel"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2" required>
+                                        <option value="">Selecione o canal...</option>
+                                        <option value="Google Ads">Google Ads</option>
+                                        <option value="Facebook Ads">Facebook Ads</option>
+                                        <option value="Instagram Ads">Instagram Ads</option>
+                                        <option value="LinkedIn Ads">LinkedIn Ads</option>
+                                        <option value="TikTok Ads">TikTok Ads</option>
+                                   </select>
+                              </div>
+                              <div>
+                                   <label class="block text-sm font-medium text-gray-700 mb-2">Objetivo</label>
+                                   <select id="campaignObjective"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2" required>
+                                        <option value="">Selecione o objetivo...</option>
+                                        <option value="Conversões">Conversões</option>
+                                        <option value="Tráfego">Tráfego</option>
+                                        <option value="Reconhecimento">Reconhecimento da Marca</option>
+                                        <option value="Leads">Geração de Leads</option>
+                                        <option value="Vendas">Vendas</option>
+                                   </select>
+                              </div>
+                         </div>
+
+                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                   <label class="block text-sm font-medium text-gray-700 mb-2">Orçamento Total
+                                        (R$)</label>
+                                   <input type="number" id="campaignBudget"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2" required>
+                              </div>
+                              <div>
+                                   <label class="block text-sm font-medium text-gray-700 mb-2">Orçamento Diário
+                                        (R$)</label>
+                                   <input type="number" id="campaignDailyBudget"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2" required>
+                              </div>
+                         </div>
+
+                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                   <label class="block text-sm font-medium text-gray-700 mb-2">Data de Início</label>
+                                   <input type="date" id="campaignStartDate"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2" required>
+                              </div>
+                              <div>
+                                   <label class="block text-sm font-medium text-gray-700 mb-2">Data de Fim</label>
+                                   <input type="date" id="campaignEndDate"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2" required>
+                              </div>
+                         </div>
+
+                         <div>
+                              <label class="block text-sm font-medium text-gray-700 mb-2">Público-Alvo</label>
+                              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                   <div>
+                                        <label class="block text-xs text-gray-500 mb-1">Idade Mínima</label>
+                                        <input type="number" id="ageMin"
+                                             class="w-full border border-gray-300 rounded-lg px-3 py-2" min="18"
+                                             max="65">
+                                   </div>
+                                   <div>
+                                        <label class="block text-xs text-gray-500 mb-1">Idade Máxima</label>
+                                        <input type="number" id="ageMax"
+                                             class="w-full border border-gray-300 rounded-lg px-3 py-2" min="18"
+                                             max="65">
+                                   </div>
+                                   <div>
+                                        <label class="block text-xs text-gray-500 mb-1">Gênero</label>
+                                        <select id="gender" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                                             <option value="Todos">Todos</option>
+                                             <option value="Masculino">Masculino</option>
+                                             <option value="Feminino">Feminino</option>
+                                        </select>
+                                   </div>
+                              </div>
+                         </div>
+
+                         <div>
+                              <label class="block text-sm font-medium text-gray-700 mb-2">Localização</label>
+                              <input type="text" id="campaignLocation"
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2"
+                                   placeholder="Ex: São Paulo, Rio de Janeiro">
+                         </div>
+
+                         <div>
+                              <label
+                                   class="block text-sm font-medium text-gray-700 mb-2">Interesses/Palavras-chave</label>
+                              <textarea id="campaignKeywords"
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 h-20"
+                                   placeholder="Digite os interesses ou palavras-chave separados por vírgula"></textarea>
+                         </div>
+
+                         <div>
+                              <label class="block text-sm font-medium text-gray-700 mb-2">Observações</label>
+                              <textarea id="campaignNotes"
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 h-16"
+                                   placeholder="Observações adicionais sobre a campanha"></textarea>
+                         </div>
+
+                         <div class="flex space-x-3">
+                              <button type="button" onclick="closeCampaignModal()"
+                                   class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg">Cancelar</button>
+                              <button type="submit" class="flex-1 bg-blue-600 text-white py-2 rounded-lg">Criar
+                                   Campanha</button>
+                         </div>
+                    </form>
+               </div>
+          </div>
+     </div>
+
+     <script src="js/main.js" defer></script>
+</body>
+
+</html>
